@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - MineContext-v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">📊 Analytics Dashboard</h1>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <a href="/" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        Gallery
+                    </a>
+                    <a href="/dashboard.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-blue-500">
+                        Dashboard
+                    </a>
+                    <a href="/reports.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        Reports
+                    </a>
+                    <a href="/todos.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        TODOs
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Date Selector -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-semibold text-gray-900">Time Period</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-700">View:</span>
+                        <select id="period-type" class="border border-gray-300 rounded-md px-3 py-2">
+                            <option value="today">Today</option>
+                            <option value="yesterday">Yesterday</option>
+                            <option value="week" selected>This Week</option>
+                            <option value="custom">Custom Range</option>
+                        </select>
+                    </label>
+                    <input type="date" id="custom-date" class="hidden border border-gray-300 rounded-md px-3 py-2">
+                    <button id="refresh-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        Refresh Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Total Screenshots</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-screenshots">0</p>
+                    </div>
+                    <div class="text-4xl">📸</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Work Sessions</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-sessions">0</p>
+                    </div>
+                    <div class="text-4xl">⏱️</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">Productivity Score</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-productivity">0</p>
+                    </div>
+                    <div class="text-4xl">📈</div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">App Switches</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-switches">0</p>
+                    </div>
+                    <div class="text-4xl">🔄</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Activity Breakdown -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Activity Breakdown</h3>
+                <canvas id="activity-chart"></canvas>
+            </div>
+
+            <!-- Hourly Distribution -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Activity by Hour</h3>
+                <canvas id="hourly-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- Top Applications -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Applications</h3>
+                <canvas id="apps-chart"></canvas>
+            </div>
+
+            <!-- Productivity Trend -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Productivity Trend (7 Days)</h3>
+                <canvas id="productivity-trend-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- TODO Widget -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">📝 Upcoming TODOs</h3>
+                <a href="/todos.html" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    View All →
+                </a>
+            </div>
+
+            <!-- TODO Stats -->
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="text-center p-3 bg-yellow-50 rounded-lg">
+                    <p class="text-2xl font-bold text-yellow-600" id="todo-pending-count">0</p>
+                    <p class="text-xs text-gray-600">Pending</p>
+                </div>
+                <div class="text-center p-3 bg-red-50 rounded-lg">
+                    <p class="text-2xl font-bold text-red-600" id="todo-upcoming-count">0</p>
+                    <p class="text-xs text-gray-600">Due Soon</p>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded-lg">
+                    <p class="text-2xl font-bold text-green-600" id="todo-completed-count">0</p>
+                    <p class="text-xs text-gray-600">Completed</p>
+                </div>
+            </div>
+
+            <!-- Upcoming TODOs List -->
+            <div id="upcoming-todos-list" class="space-y-2">
+                <!-- TODOs will be inserted here -->
+            </div>
+
+            <div id="no-upcoming-todos" class="text-center py-8 text-gray-400 hidden">
+                <p class="text-sm">No upcoming TODOs</p>
+                <a href="/todos.html" class="text-xs text-blue-600 hover:underline mt-2 inline-block">
+                    Create your first TODO
+                </a>
+            </div>
+
+            <!-- Quick Add TODO -->
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <form id="quick-add-todo-form" class="flex space-x-2">
+                    <input
+                        type="text"
+                        id="quick-todo-text"
+                        class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm"
+                        placeholder="Quick add TODO..."
+                    >
+                    <button
+                        type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                    >
+                        Add
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Work Sessions Table -->
+        <div class="bg-white rounded-lg shadow-sm p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Work Sessions</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Start Time</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Duration</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Screenshots</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Main Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessions-table" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-gray-500">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

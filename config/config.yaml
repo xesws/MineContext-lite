@@ -1,0 +1,43 @@
+capture:
+  interval_seconds: 5
+  auto_start: false
+  screenshot_dir: ./screenshots
+  max_screenshots: 10000
+  deduplicate: true
+  hash_threshold: 5
+
+storage:
+  database_path: ./data/context.db
+  compression: true
+  quality: 85
+
+ai:
+  enabled: true
+  provider: openrouter  # or anthropic, openai
+  model: anthropic/claude-3.5-sonnet
+  auto_analyze: false
+  analyze_on_demand: true
+
+embeddings:
+  enabled: true
+  model: all-MiniLM-L6-v2  # sentence-transformers model
+  auto_generate: true  # auto-generate embeddings after AI analysis
+  batch_size: 32  # batch size for embedding generation
+
+vector_db:
+  enabled: true
+  path: ./data/chroma_db
+  collection_name: screenshot_contexts
+  similarity_threshold: 0.3  # threshold for semantic similarity (0-1)
+  max_results: 10  # max results for similarity search
+
+context_resurfacing:
+  enabled: true
+  relevance_decay_days: 30  # older contexts decay in relevance
+  min_similarity: 0.3  # minimum similarity for resurfacing
+  max_suggestions: 5  # max proactive suggestions
+
+server:
+  host: 127.0.0.1
+  port: 8000
+  debug: false

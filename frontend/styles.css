@@ -1,0 +1,124 @@
+/* Custom styles for MineContext-v2 */
+
+/* Line clamp for text truncation */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Smooth transitions */
+* {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Lightbox animations */
+#lightbox {
+    animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+#lightbox-image {
+    animation: zoomIn 0.2s ease-out;
+}
+
+@keyframes zoomIn {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Toast animations */
+#toast-container > div {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Loading spinner */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Image hover effects */
+img {
+    transition: transform 0.2s ease-in-out;
+}
+
+img:hover {
+    transform: scale(1.02);
+}
+
+/* Focus styles for accessibility */
+button:focus,
+input:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .max-w-7xl {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+/* Card hover effect */
+.bg-white {
+    transition: all 0.2s ease-in-out;
+}
+
+.bg-white:hover {
+    transform: translateY(-2px);
+}

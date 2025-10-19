@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - MineContext-v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">📄 Reports</h1>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <a href="/" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        Gallery
+                    </a>
+                    <a href="/dashboard.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        Dashboard
+                    </a>
+                    <a href="/reports.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-blue-500">
+                        Reports
+                    </a>
+                    <a href="/todos.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        TODOs
+                    </a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Report Generation Panel -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Generate Report</h2>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Report Type</label>
+                            <select id="report-type" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                                <option value="daily">Daily Report</option>
+                                <option value="weekly">Weekly Report</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                            <input type="date" id="report-date" class="w-full border border-gray-300 rounded-md px-3 py-2">
+                        </div>
+
+                        <button id="generate-btn" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium">
+                            Generate Report
+                        </button>
+
+                        <div id="generate-loading" class="hidden text-center py-4">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <p class="mt-2 text-sm text-gray-600">Generating report...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Reports List -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Reports</h3>
+                    <div id="reports-list" class="space-y-2">
+                        <p class="text-sm text-gray-500">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Report Viewer -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-xl font-semibold text-gray-900">Report Content</h2>
+                        <button id="download-btn" class="hidden px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 text-sm">
+                            Download Markdown
+                        </button>
+                    </div>
+
+                    <div id="report-content" class="prose max-w-none">
+                        <p class="text-gray-500 text-center py-12">Select a report or generate a new one to view it here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/reports.js"></script>
+</body>
+</html>
