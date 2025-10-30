@@ -146,6 +146,74 @@ MineContext-v2 是一个轻量级、本地优先的上下文感知AI应用程序
 - **下载功能**
   - 点击 `Download Report` 下载Markdown文件
 
+### 4. TODO Management（待办事项管理）
+
+**访问地址**: http://127.0.0.1:8000/todos.html
+
+**主要功能：**
+- **统计卡片**
+  - Pending - 待办事项数量
+  - Due Soon - 即将到期数量（3天内）
+  - Completed - 已完成数量
+
+- **过滤功能**
+  - 状态过滤：待办 / 已完成 / 全部
+  - 优先级过滤：高 / 中 / 低 / 全部
+  - 来源过滤：手动创建 / AI提取 / 全部
+
+- **创建和编辑TODO**
+  - 标题（可选）
+  - 内容（必填）
+  - 优先级（低/中/高）
+  - 截止日期（datetime选择器）
+  - 备注（可选）
+
+- **TODO列表特性**
+  - 优先级彩色标签（🔴高 🟡中 🟢低）
+  - 来源图标（✏️手动 🤖AI）
+  - 逾期警告（⚠️ 已逾期）
+  - 相对时间显示（今天、明天、X天后）
+  - 操作按钮：✓完成、✏️编辑、🗑️删除
+
+**Dashboard TODO小部件：**
+
+在Dashboard页面底部集成了TODO管理小部件：
+- 显示前5个即将到期的TODO
+- 快速添加TODO输入框
+- 一键完成功能
+- 24小时内到期项目红色高亮
+- "View All →" 链接到完整TODO页面
+
+**使用示例：**
+
+```bash
+# 创建TODO
+curl -X POST "http://127.0.0.1:8000/api/todos" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "完成周报",
+    "todo_text": "总结本周工作内容和下周计划",
+    "priority": "high",
+    "due_date": "2025-10-20T18:00:00",
+    "notes": "需要包含项目进度"
+  }'
+
+# 获取待办事项
+curl "http://127.0.0.1:8000/api/todos?status=pending&priority=high"
+
+# 获取3天内到期的TODO
+curl "http://127.0.0.1:8000/api/todos/upcoming/deadline?days=3"
+
+# 完成TODO
+curl -X POST "http://127.0.0.1:8000/api/todos/1/complete"
+```
+
+**最佳实践：**
+- 高优先级：当天必须完成的紧急任务
+- 中优先级：本周内完成的重要任务
+- 低优先级：可延后的任务和改进项
+- AI提取的TODO可以手动编辑补充截止日期
+
 ---
 
 ## 🔧 配置说明
@@ -259,6 +327,16 @@ capture:
 - `POST /api/reports/daily` - 生成每日报告
 - `POST /api/reports/weekly` - 生成周报告
 
+**TODO管理**
+- `POST /api/todos` - 创建TODO
+- `GET /api/todos` - 获取TODO列表（支持过滤）
+- `GET /api/todos/{id}` - 获取单个TODO
+- `PATCH /api/todos/{id}` - 更新TODO
+- `DELETE /api/todos/{id}` - 删除TODO
+- `POST /api/todos/{id}/complete` - 标记为完成
+- `POST /api/todos/{id}/reopen` - 重新打开
+- `GET /api/todos/upcoming/deadline` - 获取即将到期的TODO
+
 **完整API文档**: http://127.0.0.1:8000/docs
 
 ---
@@ -277,7 +355,8 @@ tasker_dev/
 │   ├── api/
 │   │   ├── routes.py           # 主要API路由
 │   │   ├── analytics_routes.py # 分析API
-│   │   └── reports_routes.py   # 报告API
+│   │   ├── reports_routes.py   # 报告API
+│   │   └── todos_routes.py     # TODO管理API
 │   ├── services/               # 业务服务
 │   │   ├── activity_analyzer.py      # 活动分析
 │   │   ├── report_generator.py       # 报告生成
@@ -293,10 +372,12 @@ tasker_dev/
 │   ├── index.html              # Gallery页面
 │   ├── dashboard.html          # 仪表盘页面
 │   ├── reports.html            # 报告页面
+│   ├── todos.html              # TODO管理页面
 │   ├── js/
 │   │   ├── app.js              # Gallery逻辑
 │   │   ├── dashboard.js        # 仪表盘逻辑
-│   │   └── reports.js          # 报告逻辑
+│   │   ├── reports.js          # 报告逻辑
+│   │   └── todos.js            # TODO管理逻辑
 │   └── styles.css              # 自定义样式
 ├── config/
 │   └── config.yaml             # 应用配置
@@ -472,10 +553,9 @@ kill <PID>
 
 ## 📄 相关文档
 
-- **完整实现总结**: `IMPLEMENTATION_SUMMARY.md`
+- **项目概览**: `README.md`
 - **测试报告**: `PLAYWRIGHT_TEST_SUMMARY.md`
-- **功能差距分析**: `GAP_ANALYSIS.md`
-- **实现计划**: `plan.md`
+- **API文档**: http://127.0.0.1:8000/docs
 
 ---
 

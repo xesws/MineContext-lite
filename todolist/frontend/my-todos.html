@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My TODOs - MineContext</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .todo-tree-item {
+            transition: all 0.2s ease;
+        }
+        .todo-tree-item:hover {
+            background-color: #f3f4f6;
+        }
+        .todo-tree-item.selected {
+            background-color: #e0e7ff;
+            border-left: 4px solid #6366f1;
+        }
+        .activity-timeline-item {
+            position: relative;
+            padding-left: 30px;
+        }
+        .activity-timeline-item:before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 25px;
+            bottom: -25px;
+            width: 2px;
+            background: #e5e7eb;
+        }
+        .activity-timeline-item:last-child:before {
+            display: none;
+        }
+        .activity-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        .progress-bar {
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6 0%, #6366f1 100%);
+            transition: width 0.3s ease;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-4">
+                    <a href="/frontend/index.html" class="text-gray-600 hover:text-gray-900">
+                        ← Back
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900">📝 My TODOs</h1>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <button id="export-btn" class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg flex items-center">
+                            📤 Export
+                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="export-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-2 z-10">
+                            <button id="export-markdown-btn" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
+                                Export as Markdown
+                            </button>
+                            <button id="export-json-btn" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100">
+                                Export as JSON
+                            </button>
+                        </div>
+                    </div>
+                    <button id="import-btn" class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                        📥 Import
+                    </button>
+                    <button id="refresh-btn" class="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg">
+                        🔄 Refresh
+                    </button>
+                    <button id="new-todo-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        + New TODO
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-12 gap-6">
+            <!-- Left Panel: TODO List -->
+            <div class="col-span-4">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold">TODO List</h2>
+                        <select id="filter-status" class="text-sm border rounded px-2 py-1">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div id="todo-tree" class="space-y-1 max-h-[calc(100vh-300px)] overflow-y-auto">
+                        <!-- TODO tree will be rendered here -->
+                        <div class="text-center text-gray-500 py-8">
+                            Loading TODOs...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: TODO Details -->
+            <div class="col-span-8">
+                <div id="todo-details" class="bg-white rounded-lg shadow-sm p-6">
+                    <!-- Empty state -->
+                    <div id="empty-state" class="text-center text-gray-500 py-12">
+                        <div class="text-6xl mb-4">📋</div>
+                        <p class="text-lg">Select a TODO to view details</p>
+                    </div>
+
+                    <!-- TODO Details Content (hidden by default) -->
+                    <div id="details-content" class="hidden">
+                        <!-- Header -->
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex-1">
+                                <h2 id="detail-title" class="text-2xl font-bold text-gray-900 mb-2"></h2>
+                                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                    <span id="detail-status" class="px-2 py-1 rounded-full"></span>
+                                    <span id="detail-priority"></span>
+                                    <span id="detail-time"></span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button id="smart-analyze-btn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                    🤖 Smart Analyze
+                                </button>
+                                <button id="edit-todo-btn" class="px-3 py-1 text-sm text-gray-700 hover:bg-gray-100 rounded">
+                                    ✏️ Edit
+                                </button>
+                                <button id="delete-todo-btn" class="px-3 py-1 text-sm text-red-600 hover:bg-red-50 rounded">
+                                    🗑️ Delete
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-6">
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">Description</h3>
+                            <p id="detail-description" class="text-gray-600 whitespace-pre-wrap"></p>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-6">
+                            <div class="flex justify-between items-center mb-2">
+                                <h3 class="text-sm font-semibold text-gray-700">Progress</h3>
+                                <div class="text-sm">
+                                    <span id="detail-progress-percent" class="font-medium text-blue-600">0%</span>
+                                    <span id="detail-subtasks-count" class="ml-2 text-gray-500"></span>
+                                </div>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="detail-progress-fill" class="progress-fill" style="width: 0%"></div>
+                            </div>
+                            <p id="last-analyzed" class="text-xs text-gray-400 mt-1"></p>
+                        </div>
+
+                        <!-- AI Progress Analysis -->
+                        <div id="progress-analysis-section" class="mb-6 hidden">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900">🤖 AI Progress Analysis</h3>
+                                <button id="reanalyze-btn" class="px-3 py-1 text-sm text-blue-600 hover:bg-blue-50 rounded">
+                                    🔄 Re-analyze
+                                </button>
+                            </div>
+
+                            <div class="space-y-4">
+                                <!-- Summary -->
+                                <div id="analysis-summary" class="p-3 bg-blue-50 rounded-lg text-sm text-gray-700"></div>
+
+                                <!-- Completed Aspects -->
+                                <div id="completed-aspects-container" class="hidden">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">✅ Completed</h4>
+                                    <ul id="completed-aspects-list" class="space-y-1">
+                                        <!-- Will be populated dynamically -->
+                                    </ul>
+                                </div>
+
+                                <!-- Remaining Aspects -->
+                                <div id="remaining-aspects-container" class="hidden">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">⏳ Remaining</h4>
+                                    <ul id="remaining-aspects-list" class="space-y-1">
+                                        <!-- Will be populated dynamically -->
+                                    </ul>
+                                </div>
+
+                                <!-- Next Steps -->
+                                <div id="next-steps-container" class="hidden">
+                                    <h4 class="text-sm font-medium text-gray-700 mb-2">💡 Next Steps</h4>
+                                    <ul id="next-steps-list" class="space-y-1">
+                                        <!-- Will be populated dynamically -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Activity Timeline -->
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">📅 Activity Timeline</h3>
+                            <div id="activity-timeline" class="space-y-4">
+                                <!-- Timeline items will be rendered here -->
+                                <div class="text-center text-gray-500 py-4">
+                                    No activities yet
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create/Edit TODO Modal -->
+    <div id="todo-modal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4">
+            <h2 id="modal-title" class="text-xl font-bold mb-4">Create New TODO</h2>
+            <form id="todo-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                        <input type="text" id="todo-title" required
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                        <textarea id="todo-description" rows="4"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+
+                    <!-- AI Decompose Button -->
+                    <div class="flex justify-end">
+                        <button type="button" id="ai-decompose-btn" class="px-3 py-1 text-sm bg-purple-50 text-purple-700 rounded hover:bg-purple-100">
+                            🧩 AI Smart Decompose
+                        </button>
+                    </div>
+
+                    <!-- Decompose Preview -->
+                    <div id="decompose-preview" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Suggested Subtasks</label>
+                        <div id="subtasks-preview-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <!-- Dynamically generated -->
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                            <select id="todo-priority" class="w-full px-3 py-2 border rounded-lg">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Estimated Hours</label>
+                            <input type="number" id="todo-estimated-hours" min="0" step="0.5"
+                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+                        <input type="text" id="todo-tags" placeholder="e.g., ML, Python, Study"
+                            class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" id="cancel-modal-btn"
+                        class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Save
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screenshot Preview Modal -->
+    <div id="screenshot-modal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Screenshot Preview</h2>
+                <button id="close-screenshot-modal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+            <div id="screenshot-content">
+                <!-- Screenshot will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full mx-4">
+            <h2 class="text-xl font-bold mb-4">Import TODOs</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Import Format</label>
+                    <div class="flex space-x-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="import-format" value="markdown" checked class="mr-2">
+                            <span>Markdown (.md)</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="import-format" value="json" class="mr-2">
+                            <span>JSON (.json)</span>
+                        </label>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select File or Paste Content</label>
+                    <input type="file" id="import-file" accept=".md,.json" class="w-full px-3 py-2 border rounded-lg mb-2">
+                    <textarea id="import-content" rows="10" placeholder="Or paste content here..."
+                        class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-import-btn" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                        Cancel
+                    </button>
+                    <button id="confirm-import-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Suggestions Modal -->
+    <div id="suggestions-modal" class="modal">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">🤖 AI Analysis Results</h2>
+                <button id="close-suggestions-modal" class="text-gray-500 hover:text-gray-700 text-2xl">×</button>
+            </div>
+
+            <!-- Auto-applied updates section -->
+            <div id="auto-updates-section" class="mb-6 hidden">
+                <h3 class="text-sm font-semibold text-green-700 mb-2">✅ Auto-Applied</h3>
+                <div id="auto-updates-list" class="space-y-2"></div>
+            </div>
+
+            <!-- Suggestions list -->
+            <div id="suggestions-section" class="mb-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-2">💡 Suggestions (check to apply)</h3>
+                <div id="suggestions-list" class="space-y-3">
+                    <!-- Dynamically generated -->
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-suggestions-btn" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
+                    Cancel
+                </button>
+                <button id="apply-suggestions-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Apply Selected
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/todolist/frontend/js/todo-api.js"></script>
+    <script src="/todolist/frontend/js/todo-components.js"></script>
+    <script src="/todolist/frontend/js/todo-manager.js"></script>
+</body>
+</html>

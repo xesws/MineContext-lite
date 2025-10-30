@@ -809,3 +809,55 @@ async def get_context_suggestions(request: ContextSuggestionsRequest):
     except Exception as e:
         logger.error(f"Error getting context suggestions: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/screenshots/{screenshot_id}/extract-todos")
+async def extract_todos_from_screenshot(screenshot_id: int):
+    """Extract TODO items from a screenshot using AI.
+
+    Args:
+        screenshot_id: Screenshot ID to extract TODOs from
+
+    Returns:
+        Extraction results with found TODOs
+    """
+    try:
+        from backend.services.todo_extractor import todo_extractor
+
+        # Check if screenshot exists
+        screenshot = db.get_screenshot(screenshot_id)
+        if not screenshot:
+            raise HTTPException(status_code=404, detail="Screenshot not found")
+
+        # Check if AI is enabled
+        if not settings.ai.enabled:
+            raise HTTPException(
+                status_code=400,
+                detail="AI features are not enabled. Set ai.enabled=true in config.yaml"
+            )
+
+        # Extract TODOs
+        result = await todo_extractor.extract_todos_from_screenshot(
+            screenshot_id=screenshot_id,
+            force_reanalysis=False
+        )
+
+        if not result['success']:
+            raise HTTPException(
+                status_code=500,
+                detail=result.get('error', 'TODO extraction failed')
+            )
+
+        return {
+            'success': True,
+            'screenshot_id': screenshot_id,
+            'todos': result.get('todos', []),
+            'stored_count': result.get('stored_count', 0),
+            'message': result.get('message', 'TODOs extracted successfully')
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error extracting TODOs from screenshot {screenshot_id}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

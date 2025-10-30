@@ -1,0 +1,55 @@
+services:
+  minecontext:
+    build: .
+    container_name: minecontext-v2
+    ports:
+      # 格式: "宿主机端口:容器端口"
+      # 使用 9527 端口避免与宿主机 8000 端口冲突
+      - "9527:8000"  # 宿主机 9527 映射到容器 8000
+    environment:
+      # 服务器配置
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+
+      # AI API Keys (从宿主机的 .env 文件读取)
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    volumes:
+      # 数据持久化 - 数据库和截图保存在宿主机
+      - ./data:/app/data
+      - ./screenshots:/app/screenshots
+
+      # 配置文件映射（可选）
+      - ./config.yaml:/app/config.yaml
+      - ./.env:/app/.env
+
+      # 前端代码映射（开发环境，实时更新）
+      - ./todolist:/app/todolist
+      - ./frontend:/app/frontend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # 可选: 如果需要多个实例，可以这样配置
+  minecontext-dev:
+    build: .
+    container_name: minecontext-v2-dev
+    ports:
+      - "8001:8000"  # 开发环境使用 8001 端口
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - SERVER_DEBUG=true
+    volumes:
+      - ./data-dev:/app/data
+      - ./screenshots-dev:/app/screenshots
+      - ./config.yaml:/app/config.yaml
+      - ./.env:/app/.env
+    restart: unless-stopped
+    profiles:
+      - dev  # 只有使用 --profile dev 时才启动

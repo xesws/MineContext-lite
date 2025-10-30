@@ -156,6 +156,13 @@ class CaptureService:
                 f"Screenshot captured: {filename} (ID: {screenshot.id}, Size: {file_size} bytes)"
             )
 
+            # Trigger TODO activity matching (async, non-blocking)
+            try:
+                from todolist.backend.services.activity_matcher import trigger_async_match
+                trigger_async_match(screenshot.id)
+            except ImportError:
+                pass  # TodoList module not installed
+
             # Cleanup old screenshots if needed
             total_screenshots = db.get_total_screenshots()
             if total_screenshots > settings.capture.max_screenshots:
@@ -210,6 +217,14 @@ class CaptureService:
             screenshot = db.create_screenshot(screenshot_data)
 
             logger.info(f"Manual screenshot captured: {filename} (ID: {screenshot.id})")
+
+            # Trigger TODO activity matching (async, non-blocking)
+            try:
+                from todolist.backend.services.activity_matcher import trigger_async_match
+                trigger_async_match(screenshot.id)
+            except ImportError:
+                pass  # TodoList module not installed
+
             return screenshot.id
 
         except Exception as e:

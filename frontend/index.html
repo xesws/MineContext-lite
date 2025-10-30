@@ -18,14 +18,33 @@
                         Loading...
                     </span>
                 </div>
-                <nav class="flex items-center space-x-4">
-                    <button id="view-gallery" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-blue-500">
-                        Gallery
-                    </button>
-                    <button id="view-timeline" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-transparent hover:border-gray-300">
-                        Timeline
-                    </button>
-                </nav>
+                <div class="flex items-center space-x-6">
+                    <!-- Page Navigation -->
+                    <nav class="flex items-center space-x-4">
+                        <a href="/" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 border-b-2 border-blue-500">
+                            Gallery
+                        </a>
+                        <a href="/dashboard.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Dashboard
+                        </a>
+                        <a href="/reports.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                            Reports
+                        </a>
+                        <a href="/todolist/frontend/my-todos.html" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900">
+                            📝 My TODOs
+                        </a>
+                    </nav>
+
+                    <!-- View Toggle -->
+                    <div class="flex items-center space-x-2 border-l pl-6">
+                        <button id="view-gallery" class="px-3 py-1 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                            Grid
+                        </button>
+                        <button id="view-timeline" class="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-200 rounded hover:bg-gray-300">
+                            Timeline
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -50,6 +69,9 @@
                     </button>
                     <button id="btn-generate-embeddings" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
                         Generate Embeddings
+                    </button>
+                    <button id="btn-extract-todos" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Extract TODOs (AI)
                     </button>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -153,9 +175,12 @@
                     <p><span class="font-medium">Description:</span> <span id="lightbox-description"></span></p>
                     <p><span class="font-medium">Tags:</span> <span id="lightbox-tags"></span></p>
                 </div>
-                <div class="mt-4 flex space-x-2">
+                <div class="mt-4 flex flex-wrap space-x-2 gap-2">
                     <button id="lightbox-analyze" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         Analyze with AI
+                    </button>
+                    <button id="lightbox-extract-todos" class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                        Extract TODOs
                     </button>
                     <button id="lightbox-find-similar" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                         Find Similar

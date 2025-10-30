@@ -275,7 +275,12 @@ function updateSessionsTable(sessions) {
     }
 
     tbody.innerHTML = sessions.map(session => {
-        const startTime = new Date(session.start_time).toLocaleTimeString();
+        // Add 'Z' suffix to treat as UTC if no timezone info
+        let timestamp = session.start_time;
+        if (timestamp && !timestamp.endsWith('Z') && !timestamp.includes('+') && !timestamp.includes('-', 10)) {
+            timestamp = timestamp + 'Z';
+        }
+        const startTime = new Date(timestamp).toLocaleTimeString();
         const duration = formatDuration(session.duration_seconds);
 
         return `
@@ -465,7 +470,13 @@ async function completeTodoFromWidget(todoId) {
 function formatDateTime(isoString) {
     if (!isoString) return '';
 
-    const date = new Date(isoString);
+    // Add 'Z' suffix to treat as UTC if no timezone info
+    let timestamp = isoString;
+    if (!isoString.endsWith('Z') && !isoString.includes('+') && !isoString.includes('-', 10)) {
+        timestamp = isoString + 'Z';
+    }
+
+    const date = new Date(timestamp);
     const now = new Date();
     const diffMs = date - now;
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));

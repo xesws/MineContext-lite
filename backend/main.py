@@ -15,6 +15,13 @@ from backend.api.todos_routes import router as todos_router
 from backend.config import settings
 from backend.database import db
 
+# Import TodoList router (optional module)
+try:
+    from todolist.backend.api.routes import router as todolist_router
+    TODOLIST_AVAILABLE = True
+except ImportError:
+    TODOLIST_AVAILABLE = False
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -65,6 +72,17 @@ app.include_router(router, prefix="/api")
 app.include_router(analytics_router, prefix="/api", tags=["Analytics"])
 app.include_router(reports_router, prefix="/api", tags=["Reports"])
 app.include_router(todos_router, prefix="/api", tags=["TODOs"])
+
+# Include TodoList router if available
+if TODOLIST_AVAILABLE:
+    app.include_router(todolist_router, prefix="/api/todolist", tags=["TodoList"])
+    logger.info("TodoList module routes registered")
+
+    # Mount TodoList frontend
+    todolist_frontend_dir = Path("todolist/frontend")
+    if todolist_frontend_dir.exists():
+        app.mount("/todolist/frontend", StaticFiles(directory=str(todolist_frontend_dir), html=True), name="todolist_frontend")
+        logger.info("TodoList frontend mounted at /todolist/frontend")
 
 # Mount static directories
 # Serve screenshots

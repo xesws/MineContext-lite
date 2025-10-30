@@ -192,6 +192,14 @@ class Database:
 
             conn.commit()
 
+            # Initialize TodoList module database
+            try:
+                from todolist.backend.database import init_todolist_database
+                init_todolist_database(conn)
+                logger.info("TodoList module database initialized")
+            except ImportError:
+                logger.debug("TodoList module not found, skipping")
+
             logger.info(f"Database initialized at {self.db_path}")
 
     def _migrate_schema(self, conn: sqlite3.Connection):

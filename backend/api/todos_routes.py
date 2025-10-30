@@ -323,3 +323,49 @@ async def get_upcoming_todos(days: int = 3):
     except Exception as e:
         logger.error(f"Error fetching upcoming TODOs: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/extract-batch")
+async def extract_todos_batch(limit: int = 10, days: int = 7):
+    """Extract TODOs from recent screenshots in batch using AI.
+
+    Args:
+        limit: Maximum number of screenshots to process (default: 10)
+        days: Only process screenshots from last N days (default: 7)
+
+    Returns:
+        Batch extraction results
+    """
+    try:
+        from backend.services.todo_extractor import todo_extractor
+        from backend.config import settings
+
+        # Check if AI is enabled
+        if not settings.ai.enabled:
+            raise HTTPException(
+                status_code=400,
+                detail="AI features are not enabled. Set ai.enabled=true in config.yaml"
+            )
+
+        # Extract TODOs in batch
+        result = await todo_extractor.extract_todos_batch(limit=limit, days=days)
+
+        if not result['success']:
+            raise HTTPException(
+                status_code=500,
+                detail=result.get('error', 'Batch TODO extraction failed')
+            )
+
+        return {
+            'success': True,
+            'processed_screenshots': result.get('processed_screenshots', 0),
+            'total_todos_extracted': result.get('total_todos_extracted', 0),
+            'failed_count': result.get('failed_count', 0),
+            'message': f"Extracted {result.get('total_todos_extracted', 0)} TODOs from {result.get('processed_screenshots', 0)} screenshots"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in batch TODO extraction: {e}")
+        raise HTTPException(status_code=500, detail=str(e))

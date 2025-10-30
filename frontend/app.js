@@ -119,6 +119,22 @@ const API = {
         return await response.json();
     },
 
+    async extractTodos(screenshotId) {
+        const response = await fetch(`${API_BASE}/screenshots/${screenshotId}/extract-todos`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error('Failed to extract TODOs');
+        return await response.json();
+    },
+
+    async extractTodosBatch(limit = 10, days = 7) {
+        const response = await fetch(`${API_BASE}/todos/extract-batch?limit=${limit}&days=${days}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error('Failed to extract TODOs in batch');
+        return await response.json();
+    },
+
     async semanticSearch(query, topK = 10, minSimilarity = null) {
         const body = { query, top_k: topK };
         if (minSimilarity !== null) body.min_similarity = minSimilarity;
@@ -188,7 +204,14 @@ function showToast(message, type = 'info') {
 }
 
 function formatDate(dateString) {
-    const date = new Date(dateString);
+    if (!dateString) return '';
+    // Add 'Z' suffix if timestamp doesn't have timezone info
+    // This ensures JS treats it as UTC and converts to local time
+    let isoString = dateString;
+    if (!dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+        isoString = dateString + 'Z';
+    }
+    const date = new Date(isoString);
     return date.toLocaleString();
 }
 
@@ -529,6 +552,63 @@ async function updateEmbeddingStats() {
     }
 }
 
+async function extractTodosBatch() {
+    const extractBtn = document.getElementById('btn-extract-todos');
+
+    try {
+        extractBtn.disabled = true;
+        extractBtn.textContent = 'Extracting...';
+        showToast('Extracting TODOs from recent screenshots...', 'info');
+
+        const result = await API.extractTodosBatch(10, 7);
+
+        if (result.success) {
+            showToast(
+                `TODO extraction complete! Found ${result.total_todos_extracted} TODOs from ${result.processed_screenshots} screenshots`,
+                result.total_todos_extracted > 0 ? 'success' : 'info'
+            );
+        } else {
+            showToast('TODO extraction failed', 'error');
+        }
+    } catch (error) {
+        showToast('Failed to extract TODOs: ' + error.message, 'error');
+    } finally {
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Extract TODOs (AI)';
+    }
+}
+
+async function lightboxExtractTodos() {
+    const screenshot = state.screenshots[state.currentLightboxIndex];
+    const extractBtn = document.getElementById('lightbox-extract-todos');
+
+    try {
+        extractBtn.disabled = true;
+        extractBtn.textContent = 'Extracting...';
+        showToast('Extracting TODOs from screenshot...', 'info');
+
+        const result = await API.extractTodos(screenshot.id);
+
+        if (result.success) {
+            if (result.stored_count > 0) {
+                showToast(
+                    `Found and saved ${result.stored_count} TODO(s)! Check the TODOs page to view them.`,
+                    'success'
+                );
+            } else {
+                showToast('No TODOs found in this screenshot', 'info');
+            }
+        } else {
+            showToast('TODO extraction failed: ' + result.error, 'error');
+        }
+    } catch (error) {
+        showToast('Failed to extract TODOs: ' + error.message, 'error');
+    } finally {
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Extract TODOs';
+    }
+}
+
 async function lightboxFindSimilar() {
     const screenshot = state.screenshots[state.currentLightboxIndex];
     const findSimilarBtn = document.getElementById('lightbox-find-similar');
@@ -805,6 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-capture-now').addEventListener('click', captureNow);
     document.getElementById('btn-analyze-batch').addEventListener('click', analyzeBatch);
     document.getElementById('btn-generate-embeddings').addEventListener('click', generateEmbeddings);
+    document.getElementById('btn-extract-todos').addEventListener('click', extractTodosBatch);
 
     // Search
     document.getElementById('btn-search').addEventListener('click', performSearch);
@@ -828,6 +909,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('lightbox-save').addEventListener('click', lightboxSave);
     document.getElementById('lightbox-delete').addEventListener('click', lightboxDelete);
     document.getElementById('lightbox-analyze').addEventListener('click', lightboxAnalyze);
+    document.getElementById('lightbox-extract-todos').addEventListener('click', lightboxExtractTodos);
     document.getElementById('lightbox-find-similar').addEventListener('click', lightboxFindSimilar);
 
     // Close lightbox on escape key

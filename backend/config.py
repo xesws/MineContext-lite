@@ -75,8 +75,6 @@ class ServerConfig(BaseSettings):
 
     class Config:
         env_prefix = "SERVER_"
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 class Settings(BaseSettings):
