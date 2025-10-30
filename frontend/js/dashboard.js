@@ -309,9 +309,19 @@ function formatDuration(seconds) {
 }
 
 function showError(message) {
-    // Simple error notification
+    showNotification(message, 'error');
+}
+
+function showNotification(message, type = 'info') {
+    // Simple notification with different types
+    const colors = {
+        success: 'bg-green-100 border-green-400 text-green-700',
+        error: 'bg-red-100 border-red-400 text-red-700',
+        info: 'bg-blue-100 border-blue-400 text-blue-700'
+    };
+
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50';
+    notification.className = `fixed top-4 right-4 ${colors[type] || colors.info} border px-4 py-3 rounded z-50`;
     notification.textContent = message;
 
     document.body.appendChild(notification);
@@ -325,24 +335,33 @@ function showError(message) {
 
 async function loadTodoWidget() {
     try {
-        // Load stats
-        const [pendingRes, completedRes, upcomingRes] = await Promise.all([
-            fetch(`${API_BASE}/todos?status=pending&limit=1000`),
-            fetch(`${API_BASE}/todos?status=completed&limit=1000`),
-            fetch(`${API_BASE}/todos/upcoming/deadline?days=3`)
+        // Load stats from new TodoList API
+        const [statsRes, pendingRes] = await Promise.all([
+            fetch(`${API_BASE}/todolist/stats`),
+            fetch(`${API_BASE}/todolist/todos?status=pending&limit=100`)
         ]);
 
-        const pending = await pendingRes.json();
-        const completed = await completedRes.json();
-        const upcoming = await upcomingRes.json();
+        const stats = await statsRes.json();
+        const pendingData = await pendingRes.json();
 
-        // Update counts
-        document.getElementById('todo-pending-count').textContent = pending.length;
-        document.getElementById('todo-completed-count').textContent = completed.length;
-        document.getElementById('todo-upcoming-count').textContent = upcoming.length;
+        // Update counts from stats
+        document.getElementById('todo-pending-count').textContent = stats.pending || 0;
+        document.getElementById('todo-completed-count').textContent = stats.completed || 0;
+
+        // Filter upcoming TODOs (due within 3 days)
+        const now = new Date();
+        const threeDaysLater = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+        const upcomingTodos = pendingData.todos.filter(todo => {
+            if (!todo.due_date) return false;
+            const dueDate = new Date(todo.due_date);
+            return dueDate >= now && dueDate <= threeDaysLater;
+        });
+
+        document.getElementById('todo-upcoming-count').textContent = upcomingTodos.length;
 
         // Display upcoming TODOs
-        displayUpcomingTodos(upcoming);
+        displayUpcomingTodos(upcomingTodos);
 
     } catch (error) {
         console.error('Error loading TODO widget:', error);
@@ -387,6 +406,9 @@ function displayUpcomingTodos(todos) {
         const diffHours = (dueDate - now) / (1000 * 60 * 60);
         const isUrgent = diffHours < 24;
 
+        // Use title or description as display text (new API format)
+        const displayText = todo.description || todo.title || 'No description';
+
         return `
             <div class="flex items-start justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50 ${isUrgent ? 'border-red-300 bg-red-50' : ''}">
                 <div class="flex-1 min-w-0">
@@ -396,7 +418,7 @@ function displayUpcomingTodos(todos) {
                             ${todo.priority}
                         </span>
                     </div>
-                    <p class="text-sm text-gray-600 truncate">${escapeHtml(todo.todo_text)}</p>
+                    <p class="text-sm text-gray-600 truncate">${escapeHtml(displayText)}</p>
                     <p class="text-xs text-gray-500 mt-1">
                         ${isUrgent ? '⚠️ ' : '📅 '}${formatDateTime(todo.due_date)}
                     </p>
@@ -424,13 +446,12 @@ async function handleQuickAddTodo(e) {
     }
 
     try {
-        const response = await fetch(`${API_BASE}/todos`, {
+        const response = await fetch(`${API_BASE}/todolist/todos`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                todo_text: todoText,
-                priority: 'medium',
-                created_by: 'manual'
+                title: todoText,
+                priority: 'medium'
             })
         });
 
@@ -450,8 +471,12 @@ async function handleQuickAddTodo(e) {
 
 async function completeTodoFromWidget(todoId) {
     try {
-        const response = await fetch(`${API_BASE}/todos/${todoId}/complete`, {
-            method: 'POST'
+        const response = await fetch(`${API_BASE}/todolist/todos/${todoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                status: 'completed'
+            })
         });
 
         if (!response.ok) {
