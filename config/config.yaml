@@ -1,10 +1,14 @@
 capture:
-  interval_seconds: 5
+  interval_seconds: 40  # 基础间隔（当random_interval=false时使用）
   auto_start: false
   screenshot_dir: ./screenshots
-  max_screenshots: 10000
+  max_screenshots: 2000  # 最多保留2000张截图
   deduplicate: true
   hash_threshold: 5
+  # 随机间隔截图配置
+  random_interval: true  # 启用随机间隔
+  min_interval_seconds: 20  # 最小间隔20秒
+  max_interval_seconds: 60  # 最大间隔60秒
 
 storage:
   database_path: ./data/context.db
@@ -14,7 +18,7 @@ storage:
 ai:
   enabled: true
   provider: openrouter  # or anthropic, openai
-  model: anthropic/claude-3.5-sonnet
+  model: qwen/qwen3-vl-235b-a22b-instruct
   auto_analyze: false
   analyze_on_demand: true
 

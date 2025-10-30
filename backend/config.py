@@ -12,12 +12,16 @@ from pydantic_settings import BaseSettings
 class CaptureConfig(BaseSettings):
     """Screenshot capture configuration."""
 
-    interval_seconds: int = Field(default=5, description="Screenshot capture interval")
+    interval_seconds: int = Field(default=40, description="Base screenshot capture interval")
     auto_start: bool = Field(default=False, description="Auto-start capture on launch")
     screenshot_dir: str = Field(default="./screenshots", description="Screenshot storage directory")
-    max_screenshots: int = Field(default=10000, description="Maximum screenshots to store")
+    max_screenshots: int = Field(default=2000, description="Maximum screenshots to store")
     deduplicate: bool = Field(default=True, description="Enable deduplication")
     hash_threshold: int = Field(default=5, description="Perceptual hash difference threshold")
+    # Random interval configuration
+    random_interval: bool = Field(default=True, description="Enable random interval between captures")
+    min_interval_seconds: int = Field(default=20, description="Minimum interval for random capture")
+    max_interval_seconds: int = Field(default=60, description="Maximum interval for random capture")
 
 
 class StorageConfig(BaseSettings):

@@ -1,5 +1,6 @@
 """Screenshot capture service for MineContext-v2."""
 
+import random
 import threading
 import time
 from datetime import datetime
@@ -42,6 +43,14 @@ class CaptureService:
             return
 
         logger.info("Starting screenshot capture service")
+        if settings.capture.random_interval:
+            logger.info(
+                f"Random interval mode: {settings.capture.min_interval_seconds}-"
+                f"{settings.capture.max_interval_seconds} seconds"
+            )
+        else:
+            logger.info(f"Fixed interval mode: {settings.capture.interval_seconds} seconds")
+
         self.is_running = True
         self._stop_event.clear()
 
@@ -78,9 +87,15 @@ class CaptureService:
 
     def _capture_loop(self):
         """Main capture loop running in background thread."""
-        logger.info(
-            f"Capture loop started with {settings.capture.interval_seconds}s interval"
-        )
+        if settings.capture.random_interval:
+            logger.info(
+                f"Capture loop started with random interval "
+                f"({settings.capture.min_interval_seconds}-{settings.capture.max_interval_seconds}s)"
+            )
+        else:
+            logger.info(
+                f"Capture loop started with {settings.capture.interval_seconds}s interval"
+            )
 
         while not self._stop_event.is_set():
             try:
@@ -88,8 +103,19 @@ class CaptureService:
             except Exception as e:
                 logger.error(f"Error in capture loop: {e}")
 
-            # Wait for the specified interval or until stop event
-            self._stop_event.wait(timeout=settings.capture.interval_seconds)
+            # Calculate next interval
+            if settings.capture.random_interval:
+                # Random interval between min and max
+                next_interval = random.randint(
+                    settings.capture.min_interval_seconds,
+                    settings.capture.max_interval_seconds
+                )
+                logger.debug(f"Next capture in {next_interval} seconds")
+            else:
+                next_interval = settings.capture.interval_seconds
+
+            # Wait for the interval or until stop event
+            self._stop_event.wait(timeout=next_interval)
 
         logger.info("Capture loop stopped")
 
